@@ -192,3 +192,47 @@ test("manifest persists across instances", async () => {
   assert.ok((await readFile(manifestPathOf(root), "utf8")).includes('"persist"'));
   await rm(root, { recursive: true, force: true });
 });
+
+test("adopt is idempotent for an already-registered directory", async () => {
+  const { root, registry } = await makeRegistry();
+  const dir = path.join(root, "manual-20260816-120000");
+  await mkdir(dir);
+  const first = await registry.adopt(dir, "session-1");
+  const second = await registry.adopt(dir, "session-2");
+  assert.equal(second.id, first.id);
+  assert.equal(second.sessionId, "session-2");
+  assert.equal(registry.list().length, 1);
+  await rm(root, { recursive: true, force: true });
+});
+
+test("allocate sanitizes illegal characters and preserves Chinese names", async () => {
+  const { root, registry } = await makeRegistry();
+  const task = await registry.allocate(' 测试/任务:名称 ');
+  assert.equal(task.name, "测试_任务_名称");
+  assert.ok(path.basename(task.dir).startsWith("测试_任务_名称-"));
+  await rm(root, { recursive: true, force: true });
+});
+
+test("cleanup removes a single task by id", async () => {
+  const { root, registry } = await makeRegistry();
+  const keep = await registry.allocate("keep");
+  const drop = await registry.allocate("drop");
+  await registry.detach(drop.id);
+  const result = await registry.cleanup({ id: drop.id });
+  assert.deepEqual(result.removed, ["drop"]);
+  assert.deepEqual(result.refused, []);
+  assert.ok(registry.get(drop.id) === void 0);
+  assert.ok(registry.get(keep.id) !== void 0);
+  assert.equal((await stat(keep.dir)).isDirectory(), true);
+  await rm(root, { recursive: true, force: true });
+});
+
+test("attach returns updated view with session binding", async () => {
+  const { root, registry } = await makeRegistry();
+  const task = await registry.allocate("bind");
+  const attached = await registry.attach(task.id, "session-xyz");
+  assert.equal(attached.sessionId, "session-xyz");
+  assert.equal(attached.status, "active");
+  assert.ok(attached.lastActiveAt >= attached.createdAt);
+  await rm(root, { recursive: true, force: true });
+});
