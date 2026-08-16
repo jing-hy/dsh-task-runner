@@ -20,7 +20,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test \"test/**/*.test.js\""
+    "test": "node --test \"test/**/*.test.js\"",
+    "test:smoke": "node test/host-smoke.mjs && node test/client-load-sim.mjs"
   },
   "keywords": [
     "dsh",
@@ -32,6 +33,15 @@
     "project"
   ],
   "license": "MIT",
+  "author": "jing-hy",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jing-hy/dsh-task-runner.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jing-hy/dsh-task-runner/issues"
+  },
+  "homepage": "https://github.com/jing-hy/dsh-task-runner#readme",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
