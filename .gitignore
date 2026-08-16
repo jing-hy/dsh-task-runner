@@ -1,0 +1,5 @@
+node_modules/
+.codex_tmp/
+*.tgz
+.package-lock.json
+npm-debug.log*

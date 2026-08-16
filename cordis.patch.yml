@@ -1,0 +1,12 @@
+# dsh-task-runner profile bundle patch (declared by `dsh.bundle.patch`).
+#
+# When this package is installed through the official CLI
+#   dsh plugin --profile <name> add dsh-task-runner
+# it is appended to the profile's `dsh.profile.bundles` layer stack and this
+# patch inserts the host plugin row. The browser half is discovered
+# automatically through the package.json `dsh.client` declaration (served at
+# /plugins/dsh-task-runner/client.js).
+
+- insert:
+    - id: task-runner
+      name: 'dsh-task-runner'
