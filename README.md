@@ -92,8 +92,9 @@ dsh plugin --profile web remove dsh-task-runner
 ## 开发
 
 ```bash
-npm test          # registry 单测（node:test）
-node test/host-smoke.mjs   # host 挂载 + API 全链路冒烟
+npm test                          # registry 单测（node:test）
+node test/host-smoke.mjs          # host 挂载 + API 全链路冒烟
+node test/client-load-sim.mjs     # client 加载模拟（ModuleLoader + apply）
 ```
 
 插件结构：
@@ -103,8 +104,16 @@ lib/index.js        host 插件：Config / API / 会话钩子 / /task 命令
 lib/registry.js     TaskRegistry：任务清单与目录生命周期（纯 Node，可单测）
 lib/wire.js         JSON API 工具（受限 body 读取、响应封装）
 lib/trust-fence.js  浏览器信任围栏
-lib/client.js       client 插件：侧边栏「任务」按钮 + 任务面板
+lib/client.js       client 插件：任务面板 + createTask / openPanel / isTaskDir
 test/               单测与冒烟
 ```
 
 兼容性：面向 `dsh 0.1.0-rc.6`（DSH EAC 3.0.1 内置版本），web profile 插件机制（`dsh.bundle.patch`）。
+
+## 疑难排查
+
+- **侧边栏任务区看不到会话**：任务组（无工作区分组）默认折叠，本插件已将其强制展开；强刷页面（Ctrl+Shift+R）后生效。
+- **创建任务时报 "session create failed"**：客户端偶发把已成功的创建误报为失败（host 实际已建）。本插件已容错：从任务清单找回真实会话并打开；如仍复现，查看浏览器控制台 `[dsh-task-runner] createTask failed:` 日志。
+- **右侧栏（better-sidebar）看不到新建文件**：better-sidebar 的 explorer 不自动刷新（设计如此），点其右上角刷新按钮即可。
+- **任务根目录可改**：profile 的 `cordis.patch.yml` 里给插件行加 `config.rootDir`（默认 `D:\dsh_working`）。
+- **升级 EAC 后官方补丁失效**：本插件 patch 了官方 `dsh-client-ui-workspace` 等包（`resources\app\node_modules` 内），EAC 升级会覆盖这些文件。重新应用方式：把 `git show HEAD:patch/` 里的补丁重新套用，或直接重装本插件后按 `docs/patching.md` 说明操作（官方包改动前都有 `.bak-taskrunner-*` 备份）。
