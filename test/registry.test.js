@@ -236,3 +236,13 @@ test("attach returns updated view with session binding", async () => {
   assert.ok(attached.lastActiveAt >= attached.createdAt);
   await rm(root, { recursive: true, force: true });
 });
+
+test("allocate respects nameMaxLength config", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "dsh-task-len-"));
+  const registry = new TaskRegistry({ rootDir: root, nameMaxLength: 6 });
+  await registry.init();
+  const task = await registry.allocate("一二三四五六七八九");
+  assert.equal(task.name, "一二三四五六");
+  assert.ok(path.basename(task.dir).startsWith("一二三四五六-"));
+  await rm(root, { recursive: true, force: true });
+});
