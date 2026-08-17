@@ -57,6 +57,34 @@ const NEW_EMPTY =
   '\t\t\t\t\t\t\t\t\t}),\n' +
   '\t\t\t\t\t\t\t\t\t(expandedSessionGroups.includes(group.key) ? group.sessions : group.sessions.slice(0, COLLAPSED_SESSION_LIMIT)).map((node) => {';
 
+// ── Patch 3: "新建任务" plus button on the task header row ──
+const OLD_TITLE =
+  '\t\t\t\t\t\t\t\t\tgroup.workspaceId === void 0\n' +
+  '\t\t\t\t\t\t\t\t\t\t? (0, react_jsx_runtime.jsx)("div", {\n' +
+  '\t\t\t\t\t\t\t\t\t\t\tclassName: "dtr-section-title",\n' +
+  '\t\t\t\t\t\t\t\t\t\t\tstyle: { height: 36, display: "flex", alignItems: "center", paddingLeft: 4, fontSize: 12, lineHeight: "20px", color: "var(--dsw-alias-label-tertiary)", fontWeight: 600, flex: "none" },\n' +
+  '\t\t\t\t\t\t\t\t\t\t\tchildren: "任务"\n' +
+  '\t\t\t\t\t\t\t\t\t\t})';
+const NEW_TITLE =
+  '\t\t\t\t\t\t\t\t\tgroup.workspaceId === void 0\n' +
+  '\t\t\t\t\t\t\t\t\t\t? (0, react_jsx_runtime.jsx)("div", {\n' +
+  '\t\t\t\t\t\t\t\t\t\t\tclassName: "dtr-section-title",\n' +
+  '\t\t\t\t\t\t\t\t\t\t\tstyle: { height: 36, display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 4, paddingRight: 4, fontSize: 12, lineHeight: "20px", color: "var(--dsw-alias-label-tertiary)", fontWeight: 600, flex: "none" },\n' +
+  '\t\t\t\t\t\t\t\t\t\t\tchildren: [(0, react_jsx_runtime.jsx)("span", {\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t\tchildren: "任务"\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t}), (0, react_jsx_runtime.jsx)("button", {\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t\ttype: "button",\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t\tclassName: WorkspaceBrowser_module_css_default.iconButton,\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t\t"aria-label": "新建任务",\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t\ttitle: "新建任务",\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t\tonClick: (e) => {\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t\t\te.stopPropagation();\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t\t\twindow.__dshTaskRunner?.createTask?.();\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t\t},\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t\tchildren: (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.IconPlusOutline16, {})\n' +
+  '\t\t\t\t\t\t\t\t\t\t\t})]\n' +
+  '\t\t\t\t\t\t\t\t\t\t})';
+
 function findTarget(argv) {
   const given = argv[2];
   if (given) return path.join(given, REL);
@@ -101,10 +129,17 @@ if (next.includes(OLD_EMPTY)) {
   console.error("[patch-sidebar-always-visible] patch 2 anchor (empty placeholder) not found — host version changed?");
   process.exit(1);
 }
+if (next.includes(OLD_TITLE)) {
+  next = next.replace(OLD_TITLE, NEW_TITLE);
+  applied += 1;
+} else {
+  console.error("[patch-sidebar-always-visible] patch 3 anchor (task header row) not found — host version changed?");
+  process.exit(1);
+}
 const bak = `${target}.bak-taskbar-${stamp()}`;
 copyFileSync(target, bak);
 writeFileSync(target, next, "utf8");
-console.log(`[patch-sidebar-always-visible] applied ${applied}/2 patches.`);
+console.log(`[patch-sidebar-always-visible] applied ${applied}/3 patches.`);
 console.log(`  target : ${target}`);
 console.log(`  backup : ${bak}`);
 console.log("  effect : hard-refresh the DSH web UI (Ctrl+Shift+R) — the module is served with a cache-busting rev.");

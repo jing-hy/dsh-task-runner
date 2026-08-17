@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2 — unreleased
+
+- 侧边栏「任务」分组标题右侧新增**「新建任务」按钮**（+）：点击立即创建任务
+  会话并自动切换过去（复用 `createTask` 流程，自动命名 `task-<时间戳>`）。
+- 补丁脚本 `scripts/patch-sidebar-always-visible.mjs` 升级为 **3 处补丁**
+  （任务栏常驻 + 空态「暂无任务」 + 标题新建按钮），EAC 升级覆盖官方包后
+  重跑一次即可全部恢复。
+
 ## 1.0.1 — 2026-08-17
 
 - **支持 DSH EAC 4.1.0** 桌面版（web-desktop profile / `dsh.profile.bundles` 加载机制）。
