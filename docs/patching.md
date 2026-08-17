@@ -21,3 +21,19 @@ C:\Users\Administrator\AppData\Local\Programs\Deepseek Harness EAC\resources\app
 每次应用前官方文件都有时间戳备份（`client.js.bak-taskrunner-<时间戳>`）。应用后**强刷页面（Ctrl+Shift+R）**即可生效，无需重启。
 
 > 注意：这些改动是运行时补丁，非标准插件 API；EAC 大版本升级后请重新核对。
+
+## rc.6 / EAC 4.1.0 补丁记录（2026-08-17）
+
+EAC 4.1.0 重置了官方包（补丁丢失 → task-runner UI 不生效，host 端正常）。重新打了以下两处最小补丁（dsh-client-ui-workspace/lib/client.js）：
+
+1. **deriveGroups 未分组强制展开**（任务会话在「未分组」始终可见）：
+   `const expanded = expandedGroups.has(g.key);` →
+   `const expanded = expandedGroups.has(g.key) || g.workspaceId === void 0;`
+
+2. **WorkspacePickFlow 菜单加「无工作区（任务）」项**（创建任务入口）：
+   - `items` 数组末尾追加 `taskEntry = [{ id: "task-null-entry", label: "无工作区（任务）", icon: IconPlusOutline16, disabled: flowBusy }]`（仅当 `window.__dshTaskRunner?.createTask` 存在）
+   - `handleSelect` 中 `id === "task-null-entry"` 时调用 `window.__dshTaskRunner.createTask(); onClose();`
+
+官方 rc.6 已内置 `startSession()` 无参进 New Session 行为（dsh-client-runtime L9934-9938），**无需补丁**。conversation chip（「无工作区（任务）」）为可选项，本次未打。
+
+**待补（可选）**：分组标题「项目/任务」36px 同高、空提示「暂无项目/任务」、任务组隐藏文件夹行、isTaskSession 常驻——rc.6 结构变化大（groupExpansion/FLAT_SESSION_ORDER_KEY 新机制），需按新渲染树适配。
