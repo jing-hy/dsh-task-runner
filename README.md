@@ -108,12 +108,13 @@ lib/client.js       client 插件：任务面板 + createTask / openPanel / isTa
 test/               单测与冒烟
 ```
 
-兼容性：面向 `dsh 0.1.0-rc.6`（DSH EAC 3.0.1 内置版本），web profile 插件机制（`dsh.bundle.patch`）。
+兼容性：**v1.0.1 起支持 DSH EAC 4.1.0 桌面版**（web-desktop profile，经 `dsh.profile.bundles` 加载）；向下兼容 `dsh 0.1.0-rc.6`（EAC 3.0.1）的 web profile 插件机制（`dsh.bundle.patch`）。
 
 ## 疑难排查
 
 - **侧边栏任务区看不到会话**：任务组（无工作区分组）默认折叠，本插件已将其强制展开；强刷页面（Ctrl+Shift+R）后生效。
+- **没有任务时侧边栏「任务」栏整个消失**：宿主只在存在无工作区会话时才渲染「任务」分组。v1.0.1 提供幂等补丁脚本 `scripts/patch-sidebar-always-visible.mjs`，让任务栏常驻并在空时显示「暂无任务」；改的是宿主 `dsh-client-ui-workspace`（强刷生效，无需重启），EAC 升级后重跑一次即可。
 - **创建任务时报 "session create failed"**：客户端偶发把已成功的创建误报为失败（host 实际已建）。本插件已容错：从任务清单找回真实会话并打开；如仍复现，查看浏览器控制台 `[dsh-task-runner] createTask failed:` 日志。
 - **右侧栏（better-sidebar）看不到新建文件**：better-sidebar 的 explorer 不自动刷新（设计如此），点其右上角刷新按钮即可。
 - **任务根目录可改**：profile 的 `cordis.patch.yml` 里给插件行加 `config.rootDir`（默认 `D:\dsh_working`）。
-- **升级 EAC 后官方补丁失效**：本插件 patch 了官方 `dsh-client-ui-workspace` 等包（`resources\app\node_modules` 内），EAC 升级会覆盖这些文件。重新应用方式：把 `git show HEAD:patch/` 里的补丁重新套用，或直接重装本插件后按 `docs/patching.md` 说明操作（官方包改动前都有 `.bak-taskrunner-*` 备份）。
+- **升级 EAC 后官方补丁失效**：本插件 patch 了官方 `dsh-client-ui-workspace` 等包（`resources\app\node_modules` 内），EAC 升级会覆盖这些文件。重新应用：先 `node scripts/patch-sidebar-always-visible.mjs`（任务栏常驻补丁，幂等），其余按 `docs/patching.md` 说明操作（官方包改动前都有 `.bak-taskrunner-*` / `.bak-taskbar-*` 备份）。

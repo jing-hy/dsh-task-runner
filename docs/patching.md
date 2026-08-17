@@ -6,7 +6,7 @@
 
 | 包 | 文件 | 改动 |
 |---|---|---|
-| `@deepseek-ai/dsh-client-ui-workspace` | `lib/client.js` | 侧边栏「工作区」下加「项目/任务」分组标题（36px 同高）、空状态「暂无项目/任务」、任务组强制展开、任务组隐藏文件夹行、工作区选择菜单加「无工作区（任务）」项、`isTaskSession` 让空白任务会话常驻显示 |
+| `@deepseek-ai/dsh-client-ui-workspace` | `lib/client.js` | 侧边栏「工作区」下加「项目/任务」分组标题（36px 同高）、任务组强制展开、任务组隐藏文件夹行、工作区选择菜单加「无工作区（任务）」项、`isTaskSession` 让空白任务会话常驻显示、**任务分组空态常驻（v1.0.1：无任务时「任务」栏不消失并显示「暂无任务」）** |
 | `@deepseek-ai/dsh-client-runtime` | `lib/client.js` | `startSession()` 无参时进入 New Session 空状态（不再自动连接最近工作区） |
 | `@deepseek-ai/dsh-client-ui-conversation` | `lib/client.js` | 无工作区会话顶部 chip 显示「无工作区（任务）」而非「选择工作区」 |
 | `@deepseek-ai/dsh-client-ui-sidebar` | `lib/client.js` | （已恢复原版，无改动） |
@@ -36,4 +36,20 @@ EAC 4.1.0 重置了官方包（补丁丢失 → task-runner UI 不生效，host 
 
 官方 rc.6 已内置 `startSession()` 无参进 New Session 行为（dsh-client-runtime L9934-9938），**无需补丁**。conversation chip（「无工作区（任务）」）为可选项，本次未打。
 
-**待补（可选）**：分组标题「项目/任务」36px 同高、空提示「暂无项目/任务」、任务组隐藏文件夹行、isTaskSession 常驻——rc.6 结构变化大（groupExpansion/FLAT_SESSION_ORDER_KEY 新机制），需按新渲染树适配。
+**待补（可选）**：分组标题「项目/任务」36px 同高、任务组隐藏文件夹行、isTaskSession 常驻——rc.6 结构变化大（groupExpansion/FLAT_SESSION_ORDER_KEY 新机制），需按新渲染树适配。其中**空提示「暂无项目/任务」已在 v1.0.1 补齐**（见下）。
+
+## v1.0.1 补丁：任务栏空态常驻（2026-08-17）
+
+宿主 `groupByWorkspace()` 只在存在未分组会话时才生成「任务」分组（`if (stray.length > 0)`），
+没有任务会话时侧边栏「任务」栏整体消失。v1.0.1 新增两处最小补丁（
+`dsh-client-ui-workspace/lib/client.js`）：
+
+1. **任务分组常驻**：条件追加 task-runner 检测
+   `if (stray.length > 0 || typeof window.__dshTaskRunner?.createTask === "function")`
+   —— 只要 task-runner 在，即使零任务会话也保留该分组；
+2. **空态提示**：任务分组（`group.workspaceId === void 0`）会话为空时，
+   在「任务」标题下渲染 `暂无任务` 占位行。
+
+固化脚本：`scripts/patch-sidebar-always-visible.mjs`（幂等：已打则跳过；备份
+`.bak-taskbar-<时间戳>`；EAC 升级覆盖官方包后重跑一次即可）。
+应用后强刷页面（Ctrl+Shift+R）生效，无需重启 DSH。
