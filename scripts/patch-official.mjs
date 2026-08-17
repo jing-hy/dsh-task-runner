@@ -62,8 +62,20 @@ const PATCHES = [
     old: "children: [groups.length === 0 && (0, react_jsx_runtime.jsx)(\"div\", {\n\t\t\t\t\t\t\tclassName: WorkspaceBrowser_module_css_default.empty,\n\t\t\t\t\t\t\tchildren: t(\"empty.none\")\n\t\t\t\t\t\t}), groups.map((group) => {",
     next: "children: [groups.length === 0 && (0, react_jsx_runtime.jsx)(\"div\", {\n\t\t\t\t\t\t\tclassName: WorkspaceBrowser_module_css_default.empty,\n\t\t\t\t\t\t\tchildren: t(\"empty.none\")\n\t\t\t\t\t\t}), groups.some((g) => g.workspaceId !== void 0) && typeof window.__dshTaskRunner?.createTask === \"function\" && (0, react_jsx_runtime.jsx)(\"div\", {\n\t\t\t\t\t\t\tclassName: \"dtr-section-title\",\n\t\t\t\t\t\t\tstyle: { height: 36, display: \"flex\", alignItems: \"center\", paddingLeft: 4, fontSize: 12, lineHeight: \"20px\", color: \"var(--dsw-alias-label-tertiary)\", fontWeight: 600, flex: \"none\" },\n\t\t\t\t\t\t\tchildren: \"项目\"\n\t\t\t\t\t\t}), groups.map((group) => {",
     probe: "children: \"项目\""
+  },
+  // 7. conversation 包：任务会话（cwd 在任务根目录）chipTitle 有值（「无工作区（任务）」），解锁输入
+  {
+    file: "dsh-client-ui-conversation",
+    old: "const chipTitle = pendingWorkspace?.title ?? (sessionId === void 0 ? void 0 : sessionWorkspace?.title ?? (workspaces.phase === \"ready\" || cwd === void 0 || cwd === \"\" ? void 0 : workspaceLabel(cwd)));",
+    next: "const isTaskCwd = typeof cwd === \"string\" && cwd !== \"\" && (cwd.startsWith(\"D:\\\\dsh_working\\\\\") || cwd.startsWith(\"D:/dsh_working/\"));\n\t\t\tconst chipTitle = pendingWorkspace?.title ?? (sessionId === void 0 ? void 0 : sessionWorkspace?.title ?? (isTaskCwd ? (typeof window.__dshTaskRunner?.createTask === \"function\" ? \"无工作区（任务）\" : workspaceLabel(cwd)) : (workspaces.phase === \"ready\" || cwd === void 0 || cwd === \"\" ? void 0 : workspaceLabel(cwd))));",
+    probe: "isTaskCwd"
   }
 ];
+
+const FILES = {
+  "dsh-client-ui-workspace": path.join(WIN32_APP, "dsh-client-ui-workspace", "lib", "client.js"),
+  "dsh-client-ui-conversation": path.join(WIN32_APP, "dsh-client-ui-conversation", "lib", "client.js")
+};
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -72,46 +84,53 @@ function log(msg) {
 }
 
 function main() {
-  if (!existsSync(TARGET)) {
-    console.error(`[patch-official] 未找到官方包: ${TARGET}\n请检查 EAC 安装路径。`);
-    process.exit(1);
-  }
-  let src = readFileSync(TARGET, "utf8");
-
-  // 检测是否已补丁（任一 probe 命中即认为已打）
-  const applied = PATCHES.filter((p) => src.includes(p.probe));
-  const missing = PATCHES.filter((p) => !src.includes(p.probe));
-
-  if (missing.length === 0) {
-    log(`已是最新（${applied.length} 处补丁全部就位），跳过。文件: ${TARGET}`);
-    process.exit(0);
-  }
-
-  // 备份
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const bak = `${TARGET}.bak-taskrunner-${stamp}`;
-  copyFileSync(TARGET, bak);
-  log(`已备份 → ${bak}`);
-
-  // 逐个应用缺失的补丁
-  let failed = 0;
-  for (const p of missing) {
-    if (!src.includes(p.old)) {
-      console.error(`[patch-official] ✗ 找不到补丁锚点（官方包结构可能已变）: ${p.probe.slice(0, 40)}…`);
-      failed += 1;
+  let anyMissing = false;
+  for (const [pkg, target] of Object.entries(FILES)) {
+    if (!existsSync(target)) {
+      console.error(`[patch-official] 未找到官方包: ${target}\n请检查 EAC 安装路径。`);
+      process.exitCode = 1;
       continue;
     }
-    src = src.replace(p.old, p.next);
-    log(`✓ 应用: ${p.probe.slice(0, 40)}…`);
-  }
+    const forPkg = PATCHES.filter((p) => (p.file ?? "dsh-client-ui-workspace") === pkg);
+    const src = readFileSync(target, "utf8");
+    const applied = forPkg.filter((p) => src.includes(p.probe));
+    const missing = forPkg.filter((p) => !src.includes(p.probe));
 
-  if (failed > 0) {
-    console.error(`[patch-official] ${failed} 处补丁失败（锚点不匹配，官方 rc 结构变化需更新本脚本）。`);
-    process.exit(2);
-  }
+    if (missing.length === 0) {
+      log(`[${pkg}] 已是最新（${applied.length} 处补丁全部就位），跳过。`);
+      continue;
+    }
 
-  writeFileSync(TARGET, src, "utf8");
-  log(`完成：${missing.length} 处补丁已应用（共 ${PATCHES.length} 处）。强刷页面 Ctrl+Shift+R 生效。`);
+    // 备份
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const bak = `${target}.bak-taskrunner-${stamp}`;
+    copyFileSync(target, bak);
+    log(`[${pkg}] 已备份 → ${path.basename(bak)}`);
+
+    // 逐个应用缺失的补丁
+    let next = src;
+    let failed = 0;
+    for (const p of missing) {
+      if (!next.includes(p.old)) {
+        console.error(`[patch-official] ✗ [${pkg}] 找不到补丁锚点（官方包结构可能已变）: ${p.probe.slice(0, 40)}…`);
+        failed += 1;
+        continue;
+      }
+      next = next.replace(p.old, p.next);
+      log(`✓ [${pkg}] 应用: ${p.probe.slice(0, 40)}…`);
+    }
+
+    if (failed > 0) {
+      console.error(`[patch-official] [${pkg}] ${failed} 处补丁失败（锚点不匹配，官方 rc 结构变化需更新本脚本）。`);
+      process.exitCode = 2;
+      continue;
+    }
+
+    writeFileSync(target, next, "utf8");
+    log(`[${pkg}] 完成：${missing.length} 处补丁已应用。`);
+    anyMissing = true;
+  }
+  if (!anyMissing && process.exitCode === undefined) log("全部官方包已是最新，无需补丁。强刷页面 Ctrl+Shift+R 生效。");
 }
 
 main();
