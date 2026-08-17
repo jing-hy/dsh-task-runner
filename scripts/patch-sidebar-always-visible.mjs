@@ -85,6 +85,107 @@ const NEW_TITLE =
   '\t\t\t\t\t\t\t\t\t\t\t})]\n' +
   '\t\t\t\t\t\t\t\t\t\t})';
 
+// ── Patch 4: move the "添加工作区" button from the 工作区 header row to the 项目 title row ──
+// 4a: headerActions keeps only the view-options menu
+const OLD_HEADER_ACTIONS =
+  '\t\t\t\t\t\t\t(0, react_jsx_runtime.jsxs)("div", {\n' +
+  '\t\t\t\t\t\t\t\tclassName: clsx(WorkspaceBrowser_module_css_default.headerActions, wide && searchExpanded && WorkspaceBrowser_module_css_default.headerActionsHidden),\n' +
+  '\t\t\t\t\t\t\t\tchildren: [wide && (0, react_jsx_runtime.jsx)(ViewOptionsMenu, {\n' +
+  '\t\t\t\t\t\t\t\t\tgroupBy,\n' +
+  '\t\t\t\t\t\t\t\t\torderBy,\n' +
+  '\t\t\t\t\t\t\t\t\tonGroupPick: (mode) => {\n' +
+  '\t\t\t\t\t\t\t\t\t\tactions.setGroupBy(mode);\n' +
+  '\t\t\t\t\t\t\t\t\t},\n' +
+  '\t\t\t\t\t\t\t\t\tonOrderPick: (mode) => {\n' +
+  '\t\t\t\t\t\t\t\t\t\tactions.setOrderBy(mode);\n' +
+  '\t\t\t\t\t\t\t\t\t},\n' +
+  '\t\t\t\t\t\t\t\t\tt\n' +
+  '\t\t\t\t\t\t\t\t}), directoryFlowAvailable && (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Tooltip, {\n' +
+  '\t\t\t\t\t\t\t\t\tlabel: t("workspace.add"),\n' +
+  '\t\t\t\t\t\t\t\t\tside: "bottom",\n' +
+  '\t\t\t\t\t\t\t\t\tdelayMs: 500,\n' +
+  '\t\t\t\t\t\t\t\t\tchildren: (0, react_jsx_runtime.jsx)("button", {\n' +
+  '\t\t\t\t\t\t\t\t\t\tref: wsPlusRef,\n' +
+  '\t\t\t\t\t\t\t\t\t\ttype: "button",\n' +
+  '\t\t\t\t\t\t\t\t\t\tclassName: WorkspaceBrowser_module_css_default.iconButton,\n' +
+  '\t\t\t\t\t\t\t\t\t\t"aria-label": t("workspace.add"),\n' +
+  '\t\t\t\t\t\t\t\t\t\tonClick: () => {\n' +
+  '\t\t\t\t\t\t\t\t\t\t\tsetWsPickerOpen((v) => !v);\n' +
+  '\t\t\t\t\t\t\t\t\t\t},\n' +
+  '\t\t\t\t\t\t\t\t\t\tchildren: (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.IconProjectAddOutline16, { size: wide ? 16 : 18 })\n' +
+  '\t\t\t\t\t\t\t\t\t})\n' +
+  '\t\t\t\t\t\t\t\t})]\n' +
+  '\t\t\t\t\t\t\t}),';
+const NEW_HEADER_ACTIONS =
+  '\t\t\t\t\t\t\t(0, react_jsx_runtime.jsxs)("div", {\n' +
+  '\t\t\t\t\t\t\t\tclassName: clsx(WorkspaceBrowser_module_css_default.headerActions, wide && searchExpanded && WorkspaceBrowser_module_css_default.headerActionsHidden),\n' +
+  '\t\t\t\t\t\t\t\tchildren: [wide && (0, react_jsx_runtime.jsx)(ViewOptionsMenu, {\n' +
+  '\t\t\t\t\t\t\t\t\tgroupBy,\n' +
+  '\t\t\t\t\t\t\t\t\torderBy,\n' +
+  '\t\t\t\t\t\t\t\t\tonGroupPick: (mode) => {\n' +
+  '\t\t\t\t\t\t\t\t\t\tactions.setGroupBy(mode);\n' +
+  '\t\t\t\t\t\t\t\t\t},\n' +
+  '\t\t\t\t\t\t\t\t\tonOrderPick: (mode) => {\n' +
+  '\t\t\t\t\t\t\t\t\t\tactions.setOrderBy(mode);\n' +
+  '\t\t\t\t\t\t\t\t\t},\n' +
+  '\t\t\t\t\t\t\t\t\tt\n' +
+  '\t\t\t\t\t\t\t\t})]\n' +
+  '\t\t\t\t\t\t\t}),';
+// 4b: SessionTree call site gains wsPlusRef / onToggleWsPicker
+const OLD_ST_CALL =
+  '\t\t\t\t\t\t\torderBy,\n' +
+  '\t\t\t\t\t\t\tt,\n' +
+  '\t\t\t\t\t\t\tonRenameRequest: (workspaceId, currentTitle) => {';
+const NEW_ST_CALL =
+  '\t\t\t\t\t\t\torderBy,\n' +
+  '\t\t\t\t\t\t\tt,\n' +
+  '\t\t\t\t\t\t\twsPlusRef,\n' +
+  '\t\t\t\t\t\t\tonToggleWsPicker: () => {\n' +
+  '\t\t\t\t\t\t\t\tsetWsPickerOpen((v) => !v);\n' +
+  '\t\t\t\t\t\t\t},\n' +
+  '\t\t\t\t\t\t\tonRenameRequest: (workspaceId, currentTitle) => {';
+// 4c: SessionTree signature
+const OLD_ST_SIG = 'function SessionTree({ useSessions, startSession, open, forkSession, workspaces, archivedSessionIds, onRenameRequest, onDeleteRequest, onSessionRename, onSessionArchive, insertWorkspaceBefore, insertSessionBefore, orderBy, groupExpansion, setGroupExpanded, sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, setSessionOrder, t }) {';
+const NEW_ST_SIG = 'function SessionTree({ useSessions, startSession, open, forkSession, workspaces, archivedSessionIds, onRenameRequest, onDeleteRequest, onSessionRename, onSessionArchive, insertWorkspaceBefore, insertSessionBefore, orderBy, groupExpansion, setGroupExpanded, sessionOrderByAccount, sessionUpdatedAtByAccount, syncSessionOrderAccount, setSessionOrder, t, wsPlusRef, onToggleWsPicker }) {';
+// 4d: 项目 title row gains the add-workspace button (right-aligned)
+const OLD_PROJECT_TITLE =
+  '\t\t\t\t\t\t}), groups.some((g) => g.workspaceId !== void 0) && typeof window.__dshTaskRunner?.createTask === "function" && (0, react_jsx_runtime.jsx)("div", {\n' +
+  '\t\t\t\t\t\t\tclassName: "dtr-section-title",\n' +
+  '\t\t\t\t\t\t\tstyle: { height: 36, display: "flex", alignItems: "center", paddingLeft: 4, fontSize: 12, lineHeight: "20px", color: "var(--dsw-alias-label-tertiary)", fontWeight: 600, flex: "none" },\n' +
+  '\t\t\t\t\t\t\tchildren: "项目"\n' +
+  '\t\t\t\t\t\t}), groups.map((group) => {';
+const NEW_PROJECT_TITLE =
+  '\t\t\t\t\t\t}), groups.some((g) => g.workspaceId !== void 0) && typeof window.__dshTaskRunner?.createTask === "function" && (0, react_jsx_runtime.jsx)("div", {\n' +
+  '\t\t\t\t\t\t\tclassName: "dtr-section-title",\n' +
+  '\t\t\t\t\t\t\tstyle: { height: 36, display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 4, paddingRight: 4, fontSize: 12, lineHeight: "20px", color: "var(--dsw-alias-label-tertiary)", fontWeight: 600, flex: "none" },\n' +
+  '\t\t\t\t\t\t\tchildren: [(0, react_jsx_runtime.jsx)("span", {\n' +
+  '\t\t\t\t\t\t\t\tchildren: "项目"\n' +
+  '\t\t\t\t\t\t\t}), (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Tooltip, {\n' +
+  '\t\t\t\t\t\t\t\tlabel: t("workspace.add"),\n' +
+  '\t\t\t\t\t\t\t\tside: "bottom",\n' +
+  '\t\t\t\t\t\t\t\tdelayMs: 500,\n' +
+  '\t\t\t\t\t\t\t\tchildren: (0, react_jsx_runtime.jsx)("button", {\n' +
+  '\t\t\t\t\t\t\t\t\tref: wsPlusRef,\n' +
+  '\t\t\t\t\t\t\t\t\ttype: "button",\n' +
+  '\t\t\t\t\t\t\t\t\tclassName: WorkspaceBrowser_module_css_default.iconButton,\n' +
+  '\t\t\t\t\t\t\t\t\t"aria-label": t("workspace.add"),\n' +
+  '\t\t\t\t\t\t\t\t\tonClick: (e) => {\n' +
+  '\t\t\t\t\t\t\t\t\t\te.stopPropagation();\n' +
+  '\t\t\t\t\t\t\t\t\t\tonToggleWsPicker();\n' +
+  '\t\t\t\t\t\t\t\t\t},\n' +
+  '\t\t\t\t\t\t\t\t\tchildren: (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.IconProjectAddOutline16, { size: 16 })\n' +
+  '\t\t\t\t\t\t\t\t})\n' +
+  '\t\t\t\t\t\t\t})]\n' +
+  '\t\t\t\t\t\t}), groups.map((group) => {';
+// 4e: 工作区 header row — search slot pushed right (remaining buttons right-aligned)
+const OLD_SEARCH_SLOT =
+  '\t\t\t\t\t\t\twide && (0, react_jsx_runtime.jsx)("div", {\n' +
+  '\t\t\t\t\t\t\t\tclassName: clsx(WorkspaceBrowser_module_css_default.searchSlot, searchExpanded && WorkspaceBrowser_module_css_default.searchSlotExpanded),';
+const NEW_SEARCH_SLOT =
+  '\t\t\t\t\t\t\twide && (0, react_jsx_runtime.jsx)("div", {\n' +
+  '\t\t\t\t\t\t\t\tclassName: clsx(WorkspaceBrowser_module_css_default.searchSlot, searchExpanded && WorkspaceBrowser_module_css_default.searchSlotExpanded),\n' +
+  '\t\t\t\t\t\t\t\tstyle: searchExpanded ? void 0 : { marginLeft: "auto" },';
+
 function findTarget(argv) {
   const given = argv[2];
   if (given) return path.join(given, REL);
@@ -136,10 +237,26 @@ if (next.includes(OLD_TITLE)) {
   console.error("[patch-sidebar-always-visible] patch 3 anchor (task header row) not found — host version changed?");
   process.exit(1);
 }
+const patch4 = [
+  ["4a headerActions", OLD_HEADER_ACTIONS, NEW_HEADER_ACTIONS],
+  ["4b SessionTree call", OLD_ST_CALL, NEW_ST_CALL],
+  ["4c SessionTree signature", OLD_ST_SIG, NEW_ST_SIG],
+  ["4d project title button", OLD_PROJECT_TITLE, NEW_PROJECT_TITLE],
+  ["4e search slot margin", OLD_SEARCH_SLOT, NEW_SEARCH_SLOT]
+];
+for (const [label, oldText, newText] of patch4) {
+  if (next.includes(oldText)) {
+    next = next.replace(oldText, newText);
+    applied += 1;
+  } else {
+    console.error(`[patch-sidebar-always-visible] patch 4 (${label}) anchor not found — host version changed?`);
+    process.exit(1);
+  }
+}
 const bak = `${target}.bak-taskbar-${stamp()}`;
 copyFileSync(target, bak);
 writeFileSync(target, next, "utf8");
-console.log(`[patch-sidebar-always-visible] applied ${applied}/3 patches.`);
+console.log(`[patch-sidebar-always-visible] applied ${applied}/8 patch edits.`);
 console.log(`  target : ${target}`);
 console.log(`  backup : ${bak}`);
 console.log("  effect : hard-refresh the DSH web UI (Ctrl+Shift+R) — the module is served with a cache-busting rev.");
