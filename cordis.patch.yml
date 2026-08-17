@@ -10,3 +10,14 @@
 - insert:
     - id: task-runner
       name: 'dsh-task-runner'
+      # cordis 4.0.1 (DSH EAC 4.0.0) resolves the fiber's service dependencies from
+      # the loader entry options (`Inject.resolve(fiber.entry.options.inject, ...)`);
+      # declaring them here guarantees `ctx.commands` / `ctx.webServer` /
+      # `ctx.webRuntime` / `ctx.sessions` are available even if a loading path
+      # drops the module-level `export const inject` (observed with link installs
+      # after the EAC 4.0.0 / cordis 4.0.1 upgrade).
+      inject:
+        - commands
+        - webServer
+        - webRuntime
+        - sessions
