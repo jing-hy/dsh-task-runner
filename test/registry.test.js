@@ -25,10 +25,11 @@ test("sanitizeName: trims, illegal chars, empty fallback, length cap", () => {
 });
 
 test("withinRoot: root and children pass, siblings fail", () => {
-  assert.equal(withinRoot("D:\\x", "D:\\x"), true);
-  assert.equal(withinRoot("D:\\x", "D:\\x\\a"), true);
-  assert.equal(withinRoot("D:\\x", "D:\\xy"), false);
-  assert.equal(withinRoot("D:\\x", "D:\\x\\..\\y"), false);
+  const base = path.join(os.tmpdir(), "dsh-within-root");
+  assert.equal(withinRoot(base, base), true);
+  assert.equal(withinRoot(base, path.join(base, "a")), true);
+  assert.equal(withinRoot(base, base + "y"), false);
+  assert.equal(withinRoot(base, path.join(base, "..", "y")), false);
 });
 
 test("allocate: creates directory, registers with timestamp name, attach works", async () => {
